@@ -1,0 +1,11 @@
+{
+  "name": "Encounter '26 Scoreboard",
+  "short_name": "Encounter Score",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#2A2A28",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
