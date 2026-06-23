@@ -1,11 +1,504 @@
-{
-  "name": "Encounter '26 Scoreboard",
-  "short_name": "Encounter Score",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#FAFAF8",
-  "theme_color": "#2A2A28",
-  "icons": [
-    { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
-  ]
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Encounter '26 Scoreboard</title>
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Encounter Score" />
+<meta name="theme-color" content="#2A2A28" />
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #FAFAF8;
+    color: #2A2A28;
+    padding-bottom: 40px;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .header {
+    padding: 20px 16px 12px;
+    position: sticky;
+    top: 0;
+    background: #FAFAF8;
+    z-index: 20;
+    border-bottom: 1px solid #E5E2DA;
+  }
+  .header-row { display: flex; align-items: center; justify-content: space-between; }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8A8578;
+    font-weight: 600;
+    margin: 0 0 2px;
+  }
+  h1 {
+    font-family: Georgia, serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .trophy { font-size: 28px; }
+  .days {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .day-btn {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: none;
+    background: #EFECE3;
+    color: #5A5648;
+  }
+  .day-btn.active { background: #2A2A28; color: #FAFAF8; }
+
+  .standings { padding: 16px 16px 0; display: flex; flex-direction: column; gap: 8px; }
+  .team-row {
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .rank { font-size: 14px; font-weight: 700; width: 20px; text-align: center; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .team-name { font-weight: 600; flex: 1; font-size: 15px; }
+  .bar-track {
+    flex: 1;
+    max-width: 100px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.6);
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 999px; transition: width 300ms ease; }
+  .team-score { font-weight: 700; font-size: 18px; width: 64px; text-align: right; }
+
+  .mode-toggle {
+    margin: 20px 16px 0;
+    display: flex;
+    background: #EFECE3;
+    border-radius: 12px;
+    padding: 4px;
+  }
+  .mode-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: #8A8578;
+  }
+  .mode-btn.active.add { background: #fff; color: #3D8A5F; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+  .mode-btn.active.sub { background: #fff; color: #C4477A; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+  .actions { padding: 12px 16px 0; display: flex; flex-direction: column; gap: 8px; }
+  .action-card { background: #fff; border: 1px solid #E5E2DA; border-radius: 16px; overflow: hidden; }
+  .action-top { padding: 12px 16px 8px; display: flex; align-items: baseline; justify-content: space-between; }
+  .action-label { font-weight: 600; font-size: 14.5px; margin: 0; }
+  .action-cap { font-size: 12px; color: #8A8578; margin: 2px 0 0; }
+  .action-pts { font-size: 14px; font-weight: 700; }
+  .action-grid { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid #F0EEE6; }
+  .team-tap {
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+  }
+  .team-tap:active { opacity: 0.5; }
+  .team-tap .dot { width: 12px; height: 12px; }
+  .team-tap-label { font-size: 10px; font-weight: 500; color: #8A8578; }
+
+  .log-toggle {
+    width: 100%;
+    padding: 8px 0;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #5A5648;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .log-section { padding: 0 16px; margin-top: 20px; }
+  .log-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; max-height: 280px; overflow-y: auto; }
+  .log-empty { font-size: 14px; color: #8A8578; padding: 12px 0; text-align: center; }
+  .log-entry {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff; border: 1px solid #E5E2DA; border-radius: 12px; padding: 8px 12px;
+  }
+  .log-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .log-text { min-width: 0; }
+  .log-label { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-meta { font-size: 11px; color: #8A8578; }
+  .log-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .log-pts { font-size: 14px; font-weight: 700; }
+  .undo-btn { font-size: 11px; color: #8A8578; text-decoration: underline; background: none; border: none; }
+
+  .reset-wrap { padding: 24px 16px 0; }
+  .reset-btn {
+    width: 100%; padding: 10px 0; border-radius: 12px; font-size: 14px; font-weight: 500;
+    color: #8A8578; border: 1px solid #E5E2DA; background: none;
+  }
+  .reset-confirm { border: 1px solid #E8B4B4; background: #FBEAEA; border-radius: 12px; padding: 12px; text-align: center; }
+  .reset-confirm p { font-size: 14px; font-weight: 500; color: #8A2E2E; margin: 0 0 8px; }
+  .reset-row { display: flex; gap: 8px; }
+  .reset-row button { flex: 1; padding: 8px 0; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; }
+  .cancel-btn { background: #fff; color: #5A5648; }
+  .confirm-btn { background: #8A2E2E; color: #fff; }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #2A2A28; color: #fff; font-size: 14px; font-weight: 500;
+    padding: 10px 16px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 30; white-space: nowrap; opacity: 0; transition: opacity 200ms ease;
+    pointer-events: none; max-width: 90vw; overflow: hidden; text-overflow: ellipsis;
+  }
+  .toast.show { opacity: 1; }
+
+  .offline-pill {
+    display: none;
+    margin: 10px 16px 0;
+    background: #FBF3E0; color: #8A6D1E; font-size: 12px; font-weight: 600;
+    padding: 6px 10px; border-radius: 8px; text-align: center;
+  }
+  .offline-pill.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <p class="eyebrow">Summer Encounter '26</p>
+      <h1>Team Scoreboard</h1>
+    </div>
+    <div class="trophy">🏆</div>
+  </div>
+  <div class="days" id="days"></div>
+</div>
+
+<div class="offline-pill" id="offlinePill">📡 Offline — your taps are still saving locally</div>
+
+<div class="standings" id="standings"></div>
+
+<div class="mode-toggle">
+  <button class="mode-btn add active" id="addModeBtn">+ Add Points</button>
+  <button class="mode-btn sub" id="subModeBtn">− Subtract Points</button>
+</div>
+
+<div class="actions" id="actions"></div>
+
+<div class="log-section">
+  <button class="log-toggle" id="logToggle">
+    <span id="logCount">Activity log (0)</span>
+    <span id="logChevron">▾</span>
+  </button>
+  <div class="log-list" id="logList" style="display:none;"></div>
+</div>
+
+<div class="reset-wrap">
+  <button class="reset-btn" id="resetBtn">↺ Reset scoreboard</button>
+  <div class="reset-confirm" id="resetConfirm" style="display:none;">
+    <p>This clears all scores and history. Are you sure?</p>
+    <div class="reset-row">
+      <button class="cancel-btn" id="cancelResetBtn">Cancel</button>
+      <button class="confirm-btn" id="confirmResetBtn">Reset everything</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TEAMS = [
+  { id: "blue", name: "Blue", hex: "#2B5FA8", soft: "#E8EEF8" },
+  { id: "yellow", name: "Yellow", hex: "#C9971E", soft: "#FBF3E0" },
+  { id: "pink", name: "Pink", hex: "#C4477A", soft: "#FBEAF1" },
+  { id: "green", name: "Green", hex: "#3D8A5F", soft: "#E8F3EC" },
+  { id: "purple", name: "Purple", hex: "#6E4F9E", soft: "#EFE9F6" },
+];
+
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday"];
+
+const ADD_ACTIONS = [
+  { key: "first_am", label: "First to AM Session", cap: "1 per day",
+    values: { Monday: null, Tuesday: 150, Wednesday: 200, Thursday: 300 } },
+  { key: "first_pm", label: "First to PM Session", cap: "1 per day",
+    values: { Monday: 100, Tuesday: 150, Wednesday: 200, Thursday: 300 } },
+  { key: "full_participation", label: "Full Participation in Activity Block", cap: "1 per day, per team",
+    values: { Monday: null, Tuesday: 150, Wednesday: 200, Thursday: 300 } },
+  { key: "stage_game_winner", label: "Winner of Stage Game (PM Session)", cap: "1 per day",
+    values: { Monday: 100, Tuesday: 150, Wednesday: 200, Thursday: 300 } },
+  { key: "best_countoff", label: "Best Count-Off", cap: "unlimited",
+    values: { Monday: 50, Tuesday: 50, Wednesday: 50, Thursday: 50 } },
+  { key: "message_participation", label: "Message Participation", cap: "unlimited",
+    values: { Monday: 50, Tuesday: 50, Wednesday: 50, Thursday: 50 } },
+];
+
+const SUBTRACT_ACTIONS = [
+  { key: "last_am", label: "Last to AM Session", cap: "1 per day",
+    values: { Monday: 100, Tuesday: 100, Wednesday: 100, Thursday: 100 } },
+  { key: "past_lights_out", label: "Out Past Lights Out", cap: "1 per team, per day",
+    values: { Monday: 200, Tuesday: 200, Wednesday: 200, Thursday: null } },
+  { key: "complaining", label: "Excessive Complaining", cap: "unlimited",
+    values: { Monday: 50, Tuesday: 50, Wednesday: 50, Thursday: 50 } },
+  { key: "worst_countoff", label: "Worst Count-Off", cap: "unlimited",
+    values: { Monday: 50, Tuesday: 50, Wednesday: 50, Thursday: 50 } },
+];
+
+const STORAGE_KEY = "encounter26-scoreboard-offline-v1";
+
+function todayName() {
+  const d = new Date().getDay();
+  const map = { 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday" };
+  return map[d] || "Monday";
 }
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        scores: parsed.scores || TEAMS.reduce((a, t) => ({ ...a, [t.id]: 0 }), {}),
+        log: parsed.log || [],
+      };
+    }
+  } catch (e) { console.error("load error", e); }
+  return { scores: TEAMS.reduce((a, t) => ({ ...a, [t.id]: 0 }), {}), log: [] };
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ scores: state.scores, log: state.log }));
+  } catch (e) { console.error("save error", e); }
+}
+
+let state = loadState();
+let currentDay = todayName();
+let currentMode = "add";
+
+const el = (sel) => document.querySelector(sel);
+
+function renderDays() {
+  const wrap = el("#days");
+  wrap.innerHTML = "";
+  DAYS.forEach((d) => {
+    const btn = document.createElement("button");
+    btn.className = "day-btn" + (d === currentDay ? " active" : "");
+    btn.textContent = d;
+    btn.onclick = () => { currentDay = d; renderAll(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function renderStandings() {
+  const wrap = el("#standings");
+  wrap.innerHTML = "";
+  const sorted = [...TEAMS].sort((a, b) => state.scores[b.id] - state.scores[a.id]);
+  const maxScore = Math.max(1, ...TEAMS.map((t) => state.scores[t.id]));
+  sorted.forEach((team, idx) => {
+    const row = document.createElement("div");
+    row.className = "team-row";
+    row.style.background = team.soft;
+    const pct = Math.max(4, (state.scores[team.id] / maxScore) * 100);
+    row.innerHTML = `
+      <span class="rank" style="color:${team.hex}">${idx + 1}</span>
+      <span class="dot" style="background:${team.hex}"></span>
+      <span class="team-name">${team.name}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${team.hex}"></div></div>
+      <span class="team-score" style="color:${team.hex}">${state.scores[team.id]}</span>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function renderActions() {
+  const wrap = el("#actions");
+  wrap.innerHTML = "";
+  const actions = currentMode === "add" ? ADD_ACTIONS : SUBTRACT_ACTIONS;
+  actions.forEach((action) => {
+    const pts = action.values[currentDay];
+    const unavailable = pts === null || pts === undefined;
+    const card = document.createElement("div");
+    card.className = "action-card";
+    const ptsColor = unavailable ? "#B8B4A8" : (currentMode === "add" ? "#3D8A5F" : "#C4477A");
+    const ptsLabel = unavailable ? "N/A" : `${currentMode === "add" ? "+" : "-"}${pts}`;
+    card.innerHTML = `
+      <div class="action-top">
+        <div>
+          <p class="action-label">${action.label}</p>
+          <p class="action-cap">${action.cap}</p>
+        </div>
+        <span class="action-pts" style="color:${ptsColor}">${ptsLabel}</span>
+      </div>
+    `;
+    if (!unavailable) {
+      const grid = document.createElement("div");
+      grid.className = "action-grid";
+      TEAMS.forEach((team) => {
+        const btn = document.createElement("button");
+        btn.className = "team-tap";
+        btn.innerHTML = `<span class="dot" style="background:${team.hex}"></span><span class="team-tap-label">${team.name}</span>`;
+        btn.onclick = () => applyAction(team.id, action, currentMode === "add" ? 1 : -1);
+        grid.appendChild(btn);
+      });
+      card.appendChild(grid);
+    }
+    wrap.appendChild(card);
+  });
+}
+
+function applyAction(teamId, action, sign) {
+  const pts = action.values[currentDay];
+  if (pts === null || pts === undefined) {
+    showToast(`Not available ${currentDay}`);
+    return;
+  }
+  const delta = sign * pts;
+  state.scores[teamId] += delta;
+  const entry = {
+    id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+    teamId, day: currentDay, label: action.label, points: delta, time: new Date().toISOString(),
+  };
+  state.log.unshift(entry);
+  saveState();
+  const team = TEAMS.find((t) => t.id === teamId);
+  showToast(`${delta > 0 ? "+" : ""}${delta} ${team.name} — ${action.label}`);
+  renderAll();
+}
+
+function undoEntry(entryId) {
+  const idx = state.log.findIndex((e) => e.id === entryId);
+  if (idx === -1) return;
+  const entry = state.log[idx];
+  state.scores[entry.teamId] -= entry.points;
+  state.log.splice(idx, 1);
+  saveState();
+  showToast("Undone");
+  renderAll();
+}
+
+function renderLog() {
+  el("#logCount").textContent = `Activity log (${state.log.length})`;
+  const list = el("#logList");
+  list.innerHTML = "";
+  if (state.log.length === 0) {
+    list.innerHTML = `<div class="log-empty">No points logged yet. Tap a team above to get started.</div>`;
+    return;
+  }
+  state.log.forEach((entry) => {
+    const team = TEAMS.find((t) => t.id === entry.teamId);
+    const row = document.createElement("div");
+    row.className = "log-entry";
+    row.innerHTML = `
+      <div class="log-left">
+        <span class="dot" style="width:10px;height:10px;background:${team.hex}"></span>
+        <div class="log-text">
+          <div class="log-label">${entry.label}</div>
+          <div class="log-meta">${entry.day} · ${team.name}</div>
+        </div>
+      </div>
+      <div class="log-right">
+        <span class="log-pts" style="color:${entry.points > 0 ? "#3D8A5F" : "#C4477A"}">${entry.points > 0 ? "+" : ""}${entry.points}</span>
+        <button class="undo-btn" data-id="${entry.id}">undo</button>
+      </div>
+    `;
+    row.querySelector(".undo-btn").onclick = () => undoEntry(entry.id);
+    list.appendChild(row);
+  });
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = el("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function renderAll() {
+  renderDays();
+  renderStandings();
+  renderActions();
+  renderLog();
+}
+
+el("#addModeBtn").onclick = () => {
+  currentMode = "add";
+  el("#addModeBtn").classList.add("active");
+  el("#subModeBtn").classList.remove("active");
+  renderActions();
+};
+el("#subModeBtn").onclick = () => {
+  currentMode = "sub";
+  el("#subModeBtn").classList.add("active");
+  el("#addModeBtn").classList.remove("active");
+  renderActions();
+};
+
+let logOpen = false;
+el("#logToggle").onclick = () => {
+  logOpen = !logOpen;
+  el("#logList").style.display = logOpen ? "flex" : "none";
+  el("#logList").style.flexDirection = "column";
+  el("#logChevron").textContent = logOpen ? "▴" : "▾";
+};
+
+el("#resetBtn").onclick = () => {
+  el("#resetBtn").style.display = "none";
+  el("#resetConfirm").style.display = "block";
+};
+el("#cancelResetBtn").onclick = () => {
+  el("#resetBtn").style.display = "block";
+  el("#resetConfirm").style.display = "none";
+};
+el("#confirmResetBtn").onclick = () => {
+  state = { scores: TEAMS.reduce((a, t) => ({ ...a, [t.id]: 0 }), {}), log: [] };
+  saveState();
+  el("#resetBtn").style.display = "block";
+  el("#resetConfirm").style.display = "none";
+  showToast("Scoreboard reset");
+  renderAll();
+};
+
+window.addEventListener("online", () => el("#offlinePill").classList.remove("show"));
+window.addEventListener("offline", () => el("#offlinePill").classList.add("show"));
+if (!navigator.onLine) el("#offlinePill").classList.add("show");
+
+renderAll();
+
+// Register service worker for offline support
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((e) => console.error("SW registration failed", e));
+  });
+}
+</script>
+</body>
+</html>
